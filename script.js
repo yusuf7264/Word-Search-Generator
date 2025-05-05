@@ -86,10 +86,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Create sound fallbacks to avoid errors
     Object.keys(sounds).forEach(key => {
+        // Add timeout to avoid hanging if sound files can't load
+        const loadTimeout = setTimeout(() => {
+            console.log(`Sound ${key} loading timed out, creating dummy`);
+            sounds[key] = { play: function() {} };
+        }, 3000); // 3 second timeout
+        
         sounds[key].volume = 0.5;
-        sounds[key].onerror = function() {
-            console.log('Sound failed to load, creating dummy');
+        sounds[key].oncanplaythrough = function() {
+            clearTimeout(loadTimeout); // Clear timeout if sound loaded successfully
+        };
+        sounds[key].onerror = function(e) {
+            console.log('Sound failed to load, creating dummy', e);
+            clearTimeout(loadTimeout); // Clear timeout as error has already occurred
             sounds[key] = { play: function() {} };  // Create dummy play function if sound fails
+        };
+        
+        // Add play wrapper with error handling
+        const originalPlay = sounds[key].play;
+        sounds[key].play = function() {
+            try {
+                const playPromise = originalPlay.call(this);
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log('Sound play failed silently', error);
+                    });
+                }
+            } catch (e) {
+                console.log('Sound play error caught', e);
+            }
         };
     });
 
@@ -581,10 +606,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Start word selection
+    let lastTouchedCell = null;
+
     function startSelection(y, x) {
         isSelecting = true;
         selectedCells = [];
         currentPath = [];
+        lastTouchedCell = { y, x };
         
         // Play select sound
         sounds.select.play();
@@ -939,6 +967,96 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // Prevent default touch behaviors that might interfere with the game
+    document.addEventListener('touchstart', function(e) {
+        // Only prevent default if we're touching the word grid
+        if (e.target.closest('#wordGrid')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    document.addEventListener('touchmove', function(e) {
+        // Only prevent default if we're touching the word grid
+        if (e.target.closest('#wordGrid')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // Enhanced touch handling for word selection
+    function handleTouchMove(e) {
+        if (!isSelecting) return;
+        
+        e.preventDefault();
+        
+        const touch = e.touches[0];
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        if (element && element.classList.contains('grid-cell')) {
+            const cellY = parseInt(element.dataset.y);
+            const cellX = parseInt(element.dataset.x);
+            
+            // Only process if it's a different cell than the last one
+            if (!lastTouchedCell || 
+                lastTouchedCell.y !== cellY || 
+                lastTouchedCell.x !== cellX) {
+                
+                lastTouchedCell = { y: cellY, x: cellX };
+                continueSelection(cellY, cellX);
+            }
+        }
+    }
+
+    // Add the event listener to the word grid
+    wordGrid.addEventListener('touchmove', handleTouchMove, { passive: false });
+    
+    // Ensure the game works well on orientation change
+    window.addEventListener('resize', function() {
+        // If we have an active grid, redraw it to fit the new screen size
+        if (wordSearchData.grid.length > 0) {
+            renderGrid();
+            // Re-highlight found words
+            wordSearchData.placedWords.forEach(word => {
+                if (word.found) {
+                    highlightFoundWord(word);
+                }
+            });
+        }
+    });
+
+    // Function to highlight a found word on the grid
+    function highlightFoundWord(wordData) {
+        const { start, direction, word } = wordData;
+        
+        for (let i = 0; i < word.length; i++) {
+            const y = start.y + i * direction.dy;
+            const x = start.x + i * direction.dx;
+            
+            const cell = document.querySelector(`.grid-cell[data-y="${y}"][data-x="${x}"]`);
+            if (cell) {
+                cell.classList.add('highlighted');
+            }
+        }
+    }
+
+    // Add offline support notice
+    function checkOnlineStatus() {
+        if (!navigator.onLine) {
+            showMessage('You are offline. The game will continue to work, but sound effects may be unavailable.', 'info');
+        }
+    }
+    
+    // Check online status at start
+    checkOnlineStatus();
+    
+    // Add listeners for online/offline events
+    window.addEventListener('online', () => {
+        showMessage('You are back online!', 'success');
+    });
+    
+    window.addEventListener('offline', () => {
+        showMessage('You are offline. The game will continue to work, but sound effects may be unavailable.', 'info');
+    });
+
     // Initialize with default words and auto-generate
     wordListInput.value = "APPLE, TIGER, MOUNTAIN, ROBOT, CLOUD, OCEAN, FOREST";
     
