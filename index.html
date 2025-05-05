@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Search Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Word Search Generator</h1>
+        </header>
+
+        <!-- How to Play Modal -->
+        <div id="howToPlayModal" class="modal-background" style="display: none;">
+            <div class="modal">
+                <div class="modal-content">
+                    <h2>How to Play</h2>
+                    <div class="instructions">
+                        <p>Word Search is a puzzle game where you find hidden words in a grid of letters.</p>
+                        
+                        <h3>Game Rules:</h3>
+                        <ol>
+                            <li><strong>Enter Words:</strong> Type comma-separated words in the input field.</li>
+                            <li><strong>Select Difficulty:</strong> Choose Easy, Medium, or Hard mode.</li>
+                            <li><strong>Generate:</strong> Click the Generate button to create your puzzle.</li>
+                            <li><strong>Find Words:</strong> Words can be placed horizontally, vertically, and diagonally (more directions in harder modes).</li>
+                            <li><strong>Select Words:</strong> Click and drag from the first letter to the last letter of a word to select it.</li>
+                            <li><strong>Use Hints:</strong> Click the Hint button if you're stuck (costs 10 points).</li>
+                        </ol>
+                        
+                        <h3>Scoring System:</h3>
+                        <ul>
+                            <li>Points are based on word length and difficulty level.</li>
+                            <li>Finding consecutive words builds a streak multiplier for bonus points!</li>
+                            <li>Completing the puzzle quickly earns you a time bonus.</li>
+                            <li>Using hints costs 10 points each.</li>
+                        </ul>
+                        
+                        <h3>Tips:</h3>
+                        <ul>
+                            <li>Look for word patterns in all directions.</li>
+                            <li>Start with longer words as they're easier to spot.</li>
+                            <li>Save hints for when you're really stuck.</li>
+                            <li>Try to maintain your streak for maximum points!</li>
+                        </ul>
+                    </div>
+                    <button class="btn close-btn">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="input-group">
+                <input type="text" id="wordList" placeholder="Enter words (e.g., APPLE, TIGER, MOUNTAIN...)" autocomplete="off">
+            </div>
+            
+            <div class="options">
+                <div class="difficulty">
+                    <label>Difficulty:</label>
+                    <select id="difficulty">
+                        <option value="easy">Easy</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                
+                <button id="generateBtn" class="btn">Generate</button>
+            </div>
+        </div>
+
+        <div class="game-area">
+            <div class="game-header">
+                <div class="timer" id="timer">00:00</div>
+                <button id="resetBtn" class="btn">Reset</button>
+                <button id="howToPlayBtn" class="btn help-btn">How to Play</button>
+            </div>
+
+            <div class="puzzle-container">
+                <div id="wordGrid" class="word-grid"></div>
+                
+                <div class="words-list-container">
+                    <h2>Words to Find</h2>
+                    <ul id="wordsList" class="words-list"></ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="message" id="message"></div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
